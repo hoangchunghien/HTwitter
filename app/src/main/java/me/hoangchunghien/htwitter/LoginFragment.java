@@ -35,13 +35,22 @@ public class LoginFragment extends Fragment {
 
     static final String LOG_TAG = LoginFragment.class.getSimpleName();
 
+    static interface LoginSuccessCallbacks {
+        void onLoginSuccess();
+    }
+
     Twitter mTwitter;
     SharedPreferences mPref;
+    LoginSuccessCallbacks mCallbacks;
 
     Button mLoginButton;
     Dialog mOAuthDialog;
 
     public LoginFragment() {
+    }
+
+    public void setOnLoginSuccessCallbacks(LoginSuccessCallbacks callbacks) {
+        mCallbacks = callbacks;
     }
 
     @Override
@@ -142,6 +151,10 @@ public class LoginFragment extends Fragment {
                                 edit.putString(getString(R.string.pref_access_token), accessToken.getToken());
                                 edit.putString(getString(R.string.pref_access_token_secret), accessToken.getTokenSecret());
                                 edit.commit();
+
+                                if (mCallbacks != null) {
+                                    mCallbacks.onLoginSuccess();
+                                }
 
                             }
                         }, new Action1<Throwable>() {
