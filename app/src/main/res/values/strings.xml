@@ -4,4 +4,5 @@
     <string name="login_button_label">Login</string>
     <string name="pref_access_token" translatable="false">ACCESS_TOKEN</string>
     <string name="pref_access_token_secret" translatable="false">ACCESS_TOKEN_SECRET</string>
+    <string name="home_find_people_button_label">Find People</string>
 </resources>

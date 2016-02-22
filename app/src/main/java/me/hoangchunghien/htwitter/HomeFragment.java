@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +41,10 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
     HomeAdapter mAdapter;
     SwipeRefreshLayout mSwipeRefreshLayout;
 
+    View mEmptyViewContainer;
+    TextView mEmptyTextView;
+    Button mFindPeopleButton;
+
     public HomeFragment() {
     }
 
@@ -52,7 +57,13 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
         mSwipeRefreshLayout.setProgressViewOffset(false, 0, 300);
         mSwipeRefreshLayout.setOnRefreshListener(this);
 
+        mEmptyViewContainer = root.findViewById(R.id.home_empty_container);
+        mEmptyTextView = (TextView) root.findViewById(R.id.home_empty_textview);
+        mFindPeopleButton = (Button) root.findViewById(R.id.home_find_people_button);
+        mEmptyViewContainer.setVisibility(View.INVISIBLE);
+
         ListView listView = (ListView) root.findViewById(R.id.home_listview);
+        listView.setEmptyView(mEmptyViewContainer);
         mAdapter = new HomeAdapter(new ArrayList<Status>());
         listView.setAdapter(mAdapter);
 
@@ -99,9 +110,16 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
                         new Action1<List<Status>>() {
                             @Override
                             public void call(List<Status> statuses) {
-                                mAdapter.clear();
-                                for (Status item : statuses) {
-                                    mAdapter.add(item);
+                                if (statuses.size() > 0) {
+                                    mAdapter.clear();
+                                    for (Status item : statuses) {
+                                        mAdapter.add(item);
+                                    }
+                                }
+                                else {
+                                    mEmptyTextView.setText("Your timeline is empty, please follow at least 5 users to gain the best of the app");
+                                    mEmptyViewContainer.setVisibility(View.VISIBLE);
+                                    mSwipeRefreshLayout.setEnabled(false);
                                 }
                                 mSwipeRefreshLayout.setRefreshing(false);
                             }
