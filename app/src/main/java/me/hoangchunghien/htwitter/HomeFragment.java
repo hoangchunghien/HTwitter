@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -39,6 +40,7 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
     static final String LOG_TAG = HomeFragment.class.getSimpleName();
 
     Twitter mTwitter;
+    SharedPreferences mSharedPrefs;
 
     HomeAdapter mAdapter;
     SwipeRefreshLayout mSwipeRefreshLayout;
@@ -70,13 +72,13 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
         mAdapter = new HomeAdapter(new ArrayList<Status>());
         listView.setAdapter(mAdapter);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
         configurationBuilder.setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY);
         configurationBuilder.setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET);
-        String accessTokenStr = sharedPreferences.getString(getString(R.string.pref_access_token), "");
-        String accessTokenSecretStr = sharedPreferences.getString(getString(R.string.pref_access_token_secret), "");
+        String accessTokenStr = mSharedPrefs.getString(getString(R.string.pref_access_token), "");
+        String accessTokenSecretStr = mSharedPrefs.getString(getString(R.string.pref_access_token_secret), "");
         AccessToken accessToken = new AccessToken(accessTokenStr, accessTokenSecretStr);
         mTwitter = new TwitterFactory(configurationBuilder.build()).getInstance(accessToken);
 
@@ -140,6 +142,19 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.home, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_logout) {
+            SharedPreferences.Editor editor = mSharedPrefs.edit();
+            editor.putString(getString(R.string.pref_access_token), "");
+            editor.putString(getString(R.string.pref_access_token_secret), "");
+            editor.commit();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
