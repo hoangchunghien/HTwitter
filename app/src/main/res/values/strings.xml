@@ -9,4 +9,5 @@
     <string name="action_logout">Logout</string>
     <string name="title_activity_people">Find People</string>
     <string name="search_title">find people</string>
+    <string name="follow_button_label">Follow</string>
 </resources>

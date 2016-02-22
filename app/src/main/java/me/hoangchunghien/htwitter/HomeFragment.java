@@ -15,9 +15,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -219,15 +222,18 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
                 root = View.inflate(getActivity(), R.layout.listview_item_home, null);
                 holder = new ViewHolder();
                 holder.textView = (TextView) root.findViewById(R.id.item_textview);
+                holder.imageView = (ImageView) root.findViewById(R.id.home_item_image);
                 root.setTag(holder);
             }
 
             holder.textView.setText(status.getText());
+            Picasso.with(getActivity()).load(status.getUser().getOriginalProfileImageURL()).into(holder.imageView);
             return root;
         }
 
         class ViewHolder {
             public TextView textView;
+            public ImageView imageView;
         }
     }
 
