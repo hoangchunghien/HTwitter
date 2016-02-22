@@ -24,6 +24,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import rx.Observable;
 import rx.Subscriber;
@@ -42,6 +44,8 @@ import twitter4j.conf.ConfigurationBuilder;
 public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
     static final String LOG_TAG = HomeFragment.class.getSimpleName();
+
+    Timer mTimer;
 
     Twitter mTwitter;
     SharedPreferences mSharedPrefs;
@@ -101,11 +105,71 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
     public void onStart() {
         super.onStart();
         Log.d(LOG_TAG, "onStart");
-        fetchHomeTimeline();
+
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                fetchHomeTimelineObservable()
+                        .subscribe(new Action1<List<Status>>() {
+                            @Override
+                            public void call(List<Status> statuses) {
+                                Log.d(LOG_TAG, "Updating...");
+                                List<Status> diffStatus = mAdapter.findDifferent(statuses);
+                                if (diffStatus.size() > 0) {
+                                    for (Status status : diffStatus) {
+                                        mAdapter.push(status);
+                                    }
+                                    Toast.makeText(getActivity(), diffStatus.size() + " new tweets found", Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        }, new Action1<Throwable>() {
+                            @Override
+                            public void call(Throwable throwable) {
+                                Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        });
+            }
+        }, 0, 20000); // Refresh every 20 seconds
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mTimer != null) {
+            mTimer.cancel();
+        }
     }
 
     private void fetchHomeTimeline() {
         mSwipeRefreshLayout.setRefreshing(true);
+        fetchHomeTimelineObservable().subscribe(
+                new Action1<List<Status>>() {
+                    @Override
+                    public void call(List<Status> statuses) {
+                        if (statuses.size() > 0) {
+                            mAdapter.clear();
+                            for (Status item : statuses) {
+                                mAdapter.add(item);
+                            }
+                        } else {
+                            mEmptyTextView.setText("Your timeline is empty, please follow at least 5 users to gain the best of the app");
+                            mEmptyViewContainer.setVisibility(View.VISIBLE);
+                            mSwipeRefreshLayout.setEnabled(false);
+                        }
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        Log.e(LOG_TAG, throwable.getMessage(), throwable);
+                        Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_LONG).show();
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
+                });
+    }
+
+    Observable<List<Status>> fetchHomeTimelineObservable() {
         Observable<List<Status>> observable = Observable.create(new Observable.OnSubscribe<List<Status>>() {
             @Override
             public void call(Subscriber<? super List<Status>> subscriber) {
@@ -119,33 +183,9 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
             }
         });
 
-        observable.subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        new Action1<List<Status>>() {
-                            @Override
-                            public void call(List<Status> statuses) {
-                                if (statuses.size() > 0) {
-                                    mAdapter.clear();
-                                    for (Status item : statuses) {
-                                        mAdapter.add(item);
-                                    }
-                                }
-                                else {
-                                    mEmptyTextView.setText("Your timeline is empty, please follow at least 5 users to gain the best of the app");
-                                    mEmptyViewContainer.setVisibility(View.VISIBLE);
-                                    mSwipeRefreshLayout.setEnabled(false);
-                                }
-                                mSwipeRefreshLayout.setRefreshing(false);
-                            }
-                        }, new Action1<Throwable>() {
-                            @Override
-                            public void call(Throwable throwable) {
-                                Log.e(LOG_TAG, throwable.getMessage(), throwable);
-                                Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_LONG).show();
-                                mSwipeRefreshLayout.setRefreshing(false);
-                            }
-                        });
+        return observable
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     @Override
@@ -186,6 +226,11 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
 
         public void clear() {
             statusList.clear();
+        }
+
+        public void push(Status status) {
+            statusList.add(0, status);
+            notifyDataSetChanged();
         }
 
         public void add(Status status) {
@@ -229,6 +274,22 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
             holder.textView.setText(status.getText());
             Picasso.with(getActivity()).load(status.getUser().getOriginalProfileImageURL()).into(holder.imageView);
             return root;
+        }
+
+        public List<Status> findDifferent(List<Status> statuses) {
+            List<Status> diffStatus = new ArrayList<>();
+            for (Status status: statuses) {
+                boolean found = false;
+                for (Status item : statusList) {
+                    if (item.getId() == status.getId()) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    diffStatus.add(status);
+            }
+            return diffStatus;
         }
 
         class ViewHolder {
