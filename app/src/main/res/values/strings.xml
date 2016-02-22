@@ -5,4 +5,6 @@
     <string name="pref_access_token" translatable="false">ACCESS_TOKEN</string>
     <string name="pref_access_token_secret" translatable="false">ACCESS_TOKEN_SECRET</string>
     <string name="home_find_people_button_label">Find People</string>
+    <string name="action_find_people">Find People</string>
+    <string name="action_logout">Logout</string>
 </resources>

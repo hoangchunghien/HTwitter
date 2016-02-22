@@ -7,6 +7,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -46,6 +48,7 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
     Button mFindPeopleButton;
 
     public HomeFragment() {
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -131,6 +134,12 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
                                 mSwipeRefreshLayout.setRefreshing(false);
                             }
                         });
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.home, menu);
     }
 
     @Override
