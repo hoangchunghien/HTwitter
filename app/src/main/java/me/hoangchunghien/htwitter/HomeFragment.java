@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,21 +31,26 @@ import twitter4j.conf.ConfigurationBuilder;
 /**
  * Created by hienhoang on 2/21/16.
  */
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
     static final String LOG_TAG = HomeFragment.class.getSimpleName();
 
     Twitter mTwitter;
 
     HomeAdapter mAdapter;
+    SwipeRefreshLayout mSwipeRefreshLayout;
 
-
-    public HomeFragment() {}
+    public HomeFragment() {
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_home, container, false);
+
+        mSwipeRefreshLayout = (SwipeRefreshLayout) root.findViewById(R.id.swipe_refresh_container);
+        mSwipeRefreshLayout.setProgressViewOffset(false, 0, 300);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
 
         ListView listView = (ListView) root.findViewById(R.id.home_listview);
         mAdapter = new HomeAdapter(new ArrayList<Status>());
@@ -72,6 +79,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchHomeTimeline() {
+        mSwipeRefreshLayout.setRefreshing(true);
         Observable<List<Status>> observable = Observable.create(new Observable.OnSubscribe<List<Status>>() {
             @Override
             public void call(Subscriber<? super List<Status>> subscriber) {
@@ -87,15 +95,29 @@ public class HomeFragment extends Fragment {
 
         observable.subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<List<Status>>() {
-                    @Override
-                    public void call(List<Status> statuses) {
-                        mAdapter.clear();
-                        for (Status item : statuses) {
-                            mAdapter.add(item);
-                        }
-                    }
-                });
+                .subscribe(
+                        new Action1<List<Status>>() {
+                            @Override
+                            public void call(List<Status> statuses) {
+                                mAdapter.clear();
+                                for (Status item : statuses) {
+                                    mAdapter.add(item);
+                                }
+                                mSwipeRefreshLayout.setRefreshing(false);
+                            }
+                        }, new Action1<Throwable>() {
+                            @Override
+                            public void call(Throwable throwable) {
+                                Log.e(LOG_TAG, throwable.getMessage(), throwable);
+                                Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_LONG).show();
+                                mSwipeRefreshLayout.setRefreshing(false);
+                            }
+                        });
+    }
+
+    @Override
+    public void onRefresh() {
+        fetchHomeTimeline();
     }
 
     class HomeAdapter extends BaseAdapter {
@@ -140,8 +162,7 @@ public class HomeFragment extends Fragment {
             if (convertView != null) {
                 root = convertView;
                 holder = (ViewHolder) convertView.getTag();
-            }
-            else {
+            } else {
                 root = View.inflate(getActivity(), R.layout.listview_item_home, null);
                 holder = new ViewHolder();
                 holder.textView = (TextView) root.findViewById(R.id.item_textview);
