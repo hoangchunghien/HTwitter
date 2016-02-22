@@ -1,5 +1,6 @@
 package me.hoangchunghien.htwitter;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -65,6 +66,12 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
         mEmptyViewContainer = root.findViewById(R.id.home_empty_container);
         mEmptyTextView = (TextView) root.findViewById(R.id.home_empty_textview);
         mFindPeopleButton = (Button) root.findViewById(R.id.home_find_people_button);
+        mFindPeopleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), PeopleActivity.class));
+            }
+        });
         mEmptyViewContainer.setVisibility(View.INVISIBLE);
 
         ListView listView = (ListView) root.findViewById(R.id.home_listview);
@@ -154,6 +161,10 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
             editor.commit();
             return true;
         }
+        else if (id == R.id.action_find_people) {
+            startActivity(new Intent(getActivity(), PeopleActivity.class));
+        }
+
         return super.onOptionsItemSelected(item);
     }
 

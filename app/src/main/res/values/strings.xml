@@ -7,4 +7,6 @@
     <string name="home_find_people_button_label">Find People</string>
     <string name="action_find_people">Find People</string>
     <string name="action_logout">Logout</string>
+    <string name="title_activity_people">Find People</string>
+    <string name="search_title">find people</string>
 </resources>
